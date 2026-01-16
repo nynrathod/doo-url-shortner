@@ -1,0 +1,44 @@
+// URL Shortener Server
+// Main entry point - Using route groups for cleaner organization
+
+import std::Http::Server;
+import std::Database;
+import std::Auth::jwt;
+import Models::{User, Link};
+import Handlers::{CreateLink, RedirectToUrl, GetLinkStats, GetUserLinks, GetLink, ListLinks, DeleteLink, UpdateLink, GetAnalytics};
+
+fn main() {
+    // Auto read DATABASE_URL from .env
+    let db = Database::postgres()?;
+
+    let app = Server::new(":3001");
+
+    // Apply CORS and rate limiting middleware
+    app.cors();          // Allow all origins
+    app.ratelimit();     // 100 requests/min per IP
+
+    // Authentication via JWT
+    app.auth("/api/auth/signup", "/api/auth/login", User, db);
+
+    // Protected link routes - using route group for cleaner organization
+    app.group("/api/links", jwt(), {
+        post("/", CreateLink),
+        get("/", ListLinks),
+        get("/:id", GetLink),
+        put("/:id", UpdateLink),
+        delete("/:id", DeleteLink),
+        get("/:id/stats", GetLinkStats),
+    });
+
+    // User's links (protected)
+    app.get("/api/user/links", jwt(), GetUserLinks);
+
+    // Analytics (protected)
+    app.get("/api/analytics", jwt(), GetAnalytics);
+
+    // Public redirect endpoint (no auth needed)
+    // This must be last to avoid matching other routes
+    app.get("/:shortCode", RedirectToUrl);
+
+    app.start();
+}

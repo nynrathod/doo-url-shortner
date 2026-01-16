@@ -1,0 +1,273 @@
+// URL Shortener Handlers
+// Custom handlers for redirect, analytics, and link management
+
+import std::Http::Server;
+import std::Random;
+import std::Database;
+import Models::{Link, User, ClickEvent};
+
+// Request struct for Link Creation
+struct CreateLinkReq {
+    destinationurl: Str,
+    expiresat?: Str,
+}
+
+// Struct for validation result from DB
+struct ValidationResult {
+    valid: Bool,
+}
+
+// Path struct for redirect route
+struct RedirectPath {
+    shortCode: Str,
+}
+
+struct LinkIdPath {
+    id: Int,
+}
+
+// Struct for collision check
+struct CountResult {
+    total: Int,
+}
+
+// Response struct for link analytics
+struct LinkStats {
+    id: Int,
+    ShortCode: Str,
+    DestinationUrl: Str,
+    ClickCount: Int,
+    LastAccessedAt: Str?,
+    ExpiresAt: Str?,
+}
+
+// POST /api/links - Create a new short link
+fn CreateLink(req: CreateLinkReq, userId: Int) -> Link ! Str {
+    let db = Database::get()?;
+
+    // 1. URL Validation via Postgres Regex
+    // Checks for http/https, domain chars, dot, and extension
+    let valRes: ValidationResult = db.rawWithParams(
+        "SELECT ($1 ~* '^https?://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}') as valid",
+        [req.destinationurl]
+    )?;
+
+    if valRes.valid == false {
+         Err "Invalid Destination URL";
+    } else {
+        // 2. Generate Unique Short Code (Loop with collision check)
+        let mut code = "";
+        let mut success = false;
+
+        // Loop 5 times for retry
+        for i in 0..5 {
+            code = Random::string(6);
+            // Check collision (simple select)
+            let existing: CountResult = db.rawWithParams(
+                "SELECT COUNT(*) as total FROM links WHERE short_code = $1",
+                [code]
+            )?;
+            if existing.total == 0 {
+                success = true;
+                break;
+            }
+        }
+
+        if success == false {
+            Err "Failed to generate unique short code, please try again.";
+        } else {
+            // 3. Insert Link
+            // Default Expiration: 7 days via SQL if not provided
+            //
+            let linkRow: Link = db.rawWithParams(
+                "INSERT INTO links (short_code, destination_url, user_id, expires_at) VALUES ($1, $2, $3, COALESCE($4, NOW() + interval '7 days')) RETURNING *",
+                [code, req.destinationurl, userId, req.expiresat]
+            )?;
+
+            Ok linkRow;
+        }
+    }
+}
+
+// GET /:shortCode - Redirect to destination URL
+fn RedirectToUrl(path: RedirectPath) -> Link ! Str {
+    let db = Database::get()?;
+
+    // Find link by short code, ensuring not expired
+    // Expiration check: ExpiresAt IS NULL OR ExpiresAt > NOW()
+    let links: [Link] = db.rawWithParams(
+        "SELECT * FROM links WHERE short_code = $1 AND (expires_at IS NULL OR expires_at > NOW())",
+        [path.shortCode]
+    )?;
+
+    if links.len() == 0 {
+        Err "Link not found or expired";
+    } else {
+        let link = links[0];
+
+        // Update click count and last accessed time
+        db.rawWithParams(
+            "UPDATE links SET click_count = click_count + 1, last_accessed_at = NOW() WHERE id = $1",
+            [link.id]
+        )?;
+
+        // Record click event for analytics
+        db.rawWithParams(
+            "INSERT INTO clickevents (link_id, clicked_at) VALUES ($1, NOW())",
+            [link.id]
+        )?;
+
+        print("RedirectToUrl: Returning destination", link);
+        Ok link;
+    }
+}
+
+// GET /api/links/:id/stats - Get link analytics
+fn GetLinkStats(id: Int) -> LinkStats ! Str {
+    let db = Database::get()?;
+
+    let rows: [LinkStats] = db.rawWithParams(
+        "SELECT id, short_code, destination_url, click_count, last_accessed_at, expires_at FROM links WHERE id = $1",
+        [id]
+    )?;
+
+    if rows.len() == 0 {
+        Err "Link not found";
+    } else {
+        Ok rows[0];
+    }
+}
+
+// GET /api/links/user - Get all links for current user
+fn GetUserLinks(userId: Int) -> [Link] ! Str {
+    let db = Database::get()?;
+
+    let linksForUser: [Link] = db.rawWithParams(
+        "SELECT * FROM links WHERE user_id = $1 ORDER BY created_at DESC",
+        [userId]
+    )?;
+
+    Ok linksForUser;
+}
+
+fn GetLink(path: LinkIdPath, userId: Int) -> Link ! Str {
+    let db = Database::get()?;
+
+    let rows: [Link] = db.rawWithParams(
+        "SELECT * FROM links WHERE id = $1 AND user_id = $2",
+        [path.id, userId]
+    )?;
+
+    if rows.len() == 0 {
+        Err "Link not found";
+    } else {
+        Ok rows[0];
+    }
+}
+
+fn ListLinks(userId: Int) -> [Link] ! Str {
+    let links = GetUserLinks(userId)?;
+    Ok links;
+}
+
+fn DeleteLink(path: LinkIdPath, userId: Int) -> Str ! Str {
+    let db = Database::get()?;
+
+    db.rawWithParams(
+        "DELETE FROM links WHERE id = $1 AND user_id = $2",
+        [path.id, userId]
+    )?;
+
+    Ok "Deleted";
+}
+
+// Request struct for Link Update
+struct UpdateLinkReq {
+    id: Int,
+    destinationurl: Str,
+    expiresat?: Str,
+}
+
+// PUT /api/links/:id - Update a link
+fn UpdateLink(req: UpdateLinkReq, userId: Int) -> Link ! Str {
+    let db = Database::get()?;
+
+    // Validate URL
+    let valRes: ValidationResult = db.rawWithParams(
+        "SELECT ($1 ~* '^https?://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}') as valid",
+        [req.destinationurl]
+    )?;
+
+    if valRes.valid == false {
+        Err "Invalid Destination URL";
+    } else {
+        // Update link (only if owned by user)
+        let rows: [Link] = db.rawWithParams(
+            "UPDATE links SET destination_url = $1, expires_at = $2 WHERE id = $3 AND user_id = $4 RETURNING *",
+            [req.destinationurl, req.expiresat, req.id, userId]
+        )?;
+
+        if rows.len() == 0 {
+            Err "Link not found or not authorized";
+        } else {
+            Ok rows[0];
+        }
+    }
+}
+
+// Analytics Structs
+struct DailyClickCount {
+    day: Str,
+    clicks: Int,
+}
+
+struct AnalyticsData {
+    totalClicks: Int,
+    totalLinks: Int,
+    activeLinks: Int,
+    topLinks: [Link],
+    dailyClicks: [DailyClickCount],
+}
+
+struct Aggregates {
+    totalClicks: Int,
+    totalLinks: Int,
+    activeLinks: Int,
+}
+
+// GET /api/analytics - Get aggregated analytics for current user
+fn GetAnalytics(userId: Int) -> AnalyticsData ! Str {
+    let db = Database::get()?;
+    // 1. Aggregates
+    let aggs: [Aggregates] = db.rawWithParams(
+        "SELECT COALESCE(SUM(click_count), 0)::INT as totalClicks, COUNT(*)::INT as totalLinks, COUNT(*) FILTER (WHERE expires_at IS NULL OR expires_at > NOW())::INT as activeLinks FROM links WHERE user_id = $1",
+        [userId]
+    )?;
+
+    if aggs.len() == 0 {
+        // Technically shouldn't happen for aggregate query even if empty, it returns 0s
+        // But for safety
+        Err "Failed to fetch analytics";
+    } else {
+        let agg = aggs[0];
+        // 2. Top Links
+        let topLinks: [Link] = db.rawWithParams(
+            "SELECT * FROM links WHERE user_id = $1 ORDER BY click_count DESC LIMIT 5",
+            [userId]
+        )?;
+
+        // 3. Daily Clicks (last 7 days)
+        let dailyClicks: [DailyClickCount] = db.rawWithParams(
+            "SELECT TO_CHAR((ce.clicked_at::timestamptz)::date, 'Dy') as day, COUNT(*)::INT as clicks FROM clickevents ce JOIN links l ON ce.link_id = l.id WHERE l.user_id = $1 AND (ce.clicked_at::timestamptz) >= NOW() - INTERVAL '7 days' GROUP BY (ce.clicked_at::timestamptz)::date ORDER BY (ce.clicked_at::timestamptz)::date",
+            [userId]
+        )?;
+
+        Ok AnalyticsData {
+            totalClicks: agg.totalClicks,
+            totalLinks: agg.totalLinks,
+            activeLinks: agg.activeLinks,
+            topLinks,
+            dailyClicks,
+        };
+    }
+}

@@ -1,0 +1,25 @@
+// URL Shortener Models
+// Using @autoTimestamp for automatic created_at/updated_at
+
+struct User @autoTimestamp {
+    id: Int @primary @auto,
+    Email: Str @email @unique,
+    Password: Str @hash @min(8) @writeOnly,
+    Name: Str,
+}
+
+struct Link @table @autoTimestamp(read) {
+    id: Int @primary @auto,
+    ShortCode: Str @unique @readOnly,
+    DestinationUrl: Str @url @redirect,
+    UserId: Int @foreign(User),
+    ClickCount: Int @readOnly @default(0),
+    LastAccessedAt?: Str,
+    ExpiresAt?: Str,
+}
+
+struct ClickEvent @table {
+    id: Int @primary @auto,
+    LinkId: Int @foreign(Link),
+    ClickedAt: Str @default("NOW()"),
+}
