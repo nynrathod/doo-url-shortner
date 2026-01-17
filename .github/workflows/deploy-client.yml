@@ -9,14 +9,13 @@ on:
       - '.github/workflows/deploy-client.yml'
 
 permissions:
-  id-token: write   # This is required for requesting the JWT
-  contents: read    # This is required for actions/checkout
+  id-token: write
+  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Remove this line if you don't have production environment set up
-    # environment: production
+    environment: PROD
     
     defaults:
       run:
@@ -31,18 +30,13 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::350394867907:role/GitHubActionsRole
           role-session-name: GitHubActions
-          aws-region: us-east-1  # Changed to us-east-1 for S3
-
-      - name: Verify AWS connection
-        run: |
-          aws sts get-caller-identity
-          echo "✅ Connected to AWS!"
+          aws-region: us-east-1
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'yarn'  # Changed to yarn
+          node-version: '18'
+          cache: 'yarn'
           cache-dependency-path: client/yarn.lock
 
       - name: Install dependencies
@@ -50,14 +44,14 @@ jobs:
 
       - name: Build React app
         env:
-          VITE_SHORT_BASE_URL: ${{ vars.VITE_SHORT_BASE_URL }}  # Changed to vars
+          VITE_SHORT_BASE_URL: ${{ vars.VITE_SHORT_BASE_URL }}
         run: yarn build
 
       - name: Deploy to S3
-        run: aws s3 sync dist s3://${{ vars.AWS_S3_BUCKET }} --delete  # Changed to vars
+        run: aws s3 sync dist s3://${{ vars.AWS_S3_BUCKET }} --delete
 
       - name: Invalidate CloudFront cache
         run: |
           aws cloudfront create-invalidation \
             --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/*"  # Changed to vars
+            --paths "/*"
