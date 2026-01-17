@@ -25,12 +25,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Debug Variables
-        run: |
-          echo "AWS_S3_BUCKET: ${{ vars.AWS_S3_BUCKET }}"
-          echo "CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}"
-          echo "VITE_SHORT_BASE_URL: ${{ vars.VITE_SHORT_BASE_URL }}"
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
