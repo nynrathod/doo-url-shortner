@@ -15,7 +15,8 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production
+    # Remove this line if you don't have production environment set up
+    # environment: production
     
     defaults:
       run:
@@ -30,31 +31,33 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::350394867907:role/GitHubActionsRole
           role-session-name: GitHubActions
-          aws-region: ap-south-1
+          aws-region: us-east-1  # Changed to us-east-1 for S3
 
       - name: Verify AWS connection
         run: |
           aws sts get-caller-identity
-          echo "✅ Connected to AWS in ap-south-1!"
+          echo "✅ Connected to AWS!"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'yarn'  # Changed to yarn
+          cache-dependency-path: client/yarn.lock
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
       - name: Build React app
         env:
-          VITE_SHORT_BASE_URL: ${{ secrets.VITE_SHORT_BASE_URL }}
+          VITE_SHORT_BASE_URL: ${{ vars.VITE_SHORT_BASE_URL }}  # Changed to vars
         run: yarn build
 
       - name: Deploy to S3
-        env:
-          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
-        # Syncs the 'dist' folder (created by yarn build in ./client) to the S3 bucket
-        run: aws s3 sync dist s3://$AWS_S3_BUCKET --delete
+        run: aws s3 sync dist s3://${{ vars.AWS_S3_BUCKET }} --delete  # Changed to vars
 
       - name: Invalidate CloudFront cache
-        env:
-          DISTRIBUTION: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id $DISTRIBUTION \
-            --paths "/*"
+            --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"  # Changed to vars
