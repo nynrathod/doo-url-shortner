@@ -25,6 +25,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # ADD DEBUG STEP HERE
+      - name: Debug GitHub Context
+        run: |
+          echo "=== GitHub Context Debug ==="
+          echo "Repository: ${{ github.repository }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Environment: ${{ github.environment }}"
+          echo "Job: ${{ github.job }}"
+          echo "Run ID: ${{ github.run_id }}"
+          echo "=== Expected vs Actual ==="
+          echo "Expected sub: repo:nynrathod/doo-url-shortner:ref:refs/heads/main"
+          echo "Actual sub would be: repo:${{ github.repository }}:ref:${{ github.ref }}"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
