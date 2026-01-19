@@ -13,10 +13,12 @@ export interface ApiError {
 // Storage keys
 const TOKEN_KEY = "auth_token";
 
+const BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || "/api";
+
 // Create axios instance
 const createApiClient = (): AxiosInstance => {
     const client = axios.create({
-        baseURL: "/api",
+        baseURL: BASE_URL,
         timeout: 30000,
         headers: {
             "Content-Type": "application/json",
