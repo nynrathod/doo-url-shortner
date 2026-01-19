@@ -1,0 +1,44 @@
+# Doo application Dockerfile for WSL
+# Build with: docker build -f Dockerfile.wsl -t doo-url-shortner-server:wsl --build-context doo_release=\\wsl.localhost\Ubuntu\home\nayan\doo-builds\linux\release --build-context doo_std=x:\Projects\doo\std .
+# Run with: docker run -p 3001:3001 --env-file .env doo-url-shortner-server:wsl
+
+FROM debian:bookworm-slim AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates clang build-essential libssl-dev pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN printf "precedence ::ffff:0:0/96  100\n" >> /etc/gai.conf
+
+WORKDIR /app
+COPY . .
+
+RUN mkdir -p ~/.doo/bin ~/.doo/bin/std
+
+COPY --from=doo_release . /tmp/doo-release
+COPY --from=doo_std . /tmp/doo-stdlib
+
+RUN test -f /tmp/doo-release/doo && \
+    cp /tmp/doo-release/doo ~/.doo/bin/doo && \
+    (cp /tmp/doo-release/*.so ~/.doo/bin/ 2>/dev/null || true) && \
+    cp -r /tmp/doo-stdlib/* ~/.doo/bin/std/ && \
+    chmod +x ~/.doo/bin/doo
+
+RUN ~/.doo/bin/doo build -o app
+
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates libssl3 && update-ca-certificates && rm -rf /var/lib/apt/lists/*
+
+RUN printf "precedence ::ffff:0:0/96  100\n" >> /etc/gai.conf
+
+WORKDIR /app
+RUN mkdir -p /app/lib
+
+COPY --from=builder /app/app .
+COPY --from=builder /root/.doo/bin/*.so /app/lib/
+
+ENV LD_LIBRARY_PATH=/app/lib
+ENV DOO_ENV=production
+
+EXPOSE 3001
+CMD ["./app"]

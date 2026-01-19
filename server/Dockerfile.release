@@ -1,0 +1,48 @@
+FROM debian:bookworm-slim AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl unzip clang build-essential libssl-dev pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN printf "precedence ::ffff:0:0/96  100\n" >> /etc/gai.conf
+
+WORKDIR /app
+COPY . .
+
+RUN DOO_TAG=$(curl -fsSL https://api.github.com/repos/nynrathod/doolang/releases/latest | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/') && \
+    DOO_VERSION=${DOO_TAG#v} && \
+    mkdir -p /root/.doo/bin /root/.doo/bin/std && \
+    curl -fsSL -o /tmp/doo.zip https://github.com/nynrathod/doolang/releases/download/${DOO_TAG}/doo-linux-${DOO_VERSION}.zip && \
+    unzip -q /tmp/doo.zip -d /tmp/doo && \
+    test -f /tmp/doo/doo || test -f /tmp/doo/bin/doo
+
+RUN if [ -f /tmp/doo/doo ]; then cp /tmp/doo/doo /root/.doo/bin/doo; else cp /tmp/doo/bin/doo /root/.doo/bin/doo; fi && \
+    chmod +x /root/.doo/bin/doo && \
+    (cp /tmp/doo/*.so /root/.doo/bin/ 2>/dev/null || true) && \
+    (cp /tmp/doo/bin/*.so /root/.doo/bin/ 2>/dev/null || true)
+
+RUN if [ -d /tmp/doo/std ]; then cp -r /tmp/doo/std/* /root/.doo/bin/std/; \
+    elif [ -d /tmp/doo/stdlib ]; then cp -r /tmp/doo/stdlib/* /root/.doo/bin/std/; \
+    elif [ -d /tmp/doo/bin/std ]; then cp -r /tmp/doo/bin/std/* /root/.doo/bin/std/; \
+    else echo "Stdlib not found in Doo release zip" && ls -la /tmp/doo && exit 1; fi
+
+RUN /root/.doo/bin/doo build -o app
+
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates libssl3 && update-ca-certificates && rm -rf /var/lib/apt/lists/*
+
+RUN printf "precedence ::ffff:0:0/96  100\n" >> /etc/gai.conf
+
+WORKDIR /app
+RUN mkdir -p /app/lib
+
+COPY --from=builder /app/app /app/app
+COPY --from=builder /root/.doo/bin/*.so /app/lib/
+
+ENV LD_LIBRARY_PATH=/app/lib
+ENV DOO_ENV=production
+ENV DOO_DB_DISABLE_PREPARED_STATEMENTS=1
+ENV DOO_REWRITE_SUPABASE_POOLER=0
+
+EXPOSE 3001
+CMD ["/app/app"]
