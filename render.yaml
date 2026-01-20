@@ -1,5 +1,6 @@
 services:
   - type: web
+    rootDir: server
     name: doo-app
     env: docker
     plan: free
