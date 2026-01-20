@@ -12,27 +12,19 @@ WORKDIR /app
 COPY . .
 
 # Install doo compiler (latest)
-# Install doo compiler (latest)
-# RUN DOO_TAG=$(curl -fsSL https://api.github.com/repos/nynrathod/doolang/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/') && \
-#     DOO_VERSION=${DOO_TAG#v} && \
-#     mkdir -p ~/.doo/bin ~/.doo/bin/std && \
-#     curl -fsSL \
-#       https://github.com/nynrathod/doolang/releases/download/${DOO_TAG}/doo-linux-${DOO_VERSION}.zip \
-#       -o /tmp/doo.zip && \
-#     unzip -q /tmp/doo.zip -d /tmp/doo-extracted && \
-#     EXTRACT_DIR=$(find /tmp/doo-extracted -mindepth 1 -maxdepth 1 -type d | head -1) && \
-#     cp "$EXTRACT_DIR/doo" ~/.doo/bin/doo && \
-#     (cp "$EXTRACT_DIR"/*.so ~/.doo/bin/ 2>/dev/null || true) && \
-#     cp -r "$EXTRACT_DIR"/std/* ~/.doo/bin/std/ && \
-#     chmod +x ~/.doo/bin/doo && \
-#     rm -rf /tmp/doo.zip /tmp/doo-extracted
-
-# TESTING: Use local build from temp_doo_build
-RUN mkdir -p /root/.doo/bin/std
-COPY temp_doo_build/doo /root/.doo/bin/doo
-COPY temp_doo_build/*.so /root/.doo/bin/
-COPY temp_doo_build/std /root/.doo/bin/std/
-RUN chmod +x /root/.doo/bin/doo
+RUN DOO_TAG=$(curl -fsSL https://api.github.com/repos/nynrathod/doolang/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/') && \
+    DOO_VERSION=${DOO_TAG#v} && \
+    mkdir -p ~/.doo/bin ~/.doo/bin/std && \
+    curl -fsSL \
+    https://github.com/nynrathod/doolang/releases/download/${DOO_TAG}/doo-linux-${DOO_VERSION}.zip \
+    -o /tmp/doo.zip && \
+    unzip -q /tmp/doo.zip -d /tmp/doo-extracted && \
+    EXTRACT_DIR=$(find /tmp/doo-extracted -mindepth 1 -maxdepth 1 -type d | head -1) && \
+    cp "$EXTRACT_DIR/doo" ~/.doo/bin/doo && \
+    (cp "$EXTRACT_DIR"/*.so ~/.doo/bin/ 2>/dev/null || true) && \
+    cp -r "$EXTRACT_DIR"/std/* ~/.doo/bin/std/ && \
+    chmod +x ~/.doo/bin/doo && \
+    rm -rf /tmp/doo.zip /tmp/doo-extracted
 
 RUN ~/.doo/bin/doo build -o app
 
