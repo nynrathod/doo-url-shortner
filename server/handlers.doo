@@ -4,7 +4,14 @@
 import std::Http::Server;
 import std::Random;
 import std::Database;
-import Models::{Link, User, ClickEvent};
+import Models::{
+    Link,
+    User,
+    ClickEvent,
+    DailyClickCount,
+    AnalyticsData,
+    Aggregates
+};
 
 // Request struct for Link Creation
 struct CreateLinkReq {
@@ -215,32 +222,12 @@ fn UpdateLink(req: UpdateLinkReq, userId: Int) -> Link ! Str {
     }
 }
 
-// Analytics Structs
-struct DailyClickCount {
-    day: Str,
-    clicks: Int,
-}
-
-struct AnalyticsData {
-    totalClicks: Int,
-    totalLinks: Int,
-    activeLinks: Int,
-    topLinks: [Link],
-    dailyClicks: [DailyClickCount],
-}
-
-struct Aggregates {
-    totalClicks: Int,
-    totalLinks: Int,
-    activeLinks: Int,
-}
-
 // GET /api/analytics - Get aggregated analytics for current user
 fn GetAnalytics(userId: Int) -> AnalyticsData ! Str {
     let db = Database::get()?;
     // 1. Aggregates
     let aggs: [Aggregates] = db.rawWithParams(
-        "SELECT COALESCE(SUM(click_count), 0)::INT as totalClicks, COUNT(*)::INT as totalLinks, COUNT(*) FILTER (WHERE expires_at IS NULL OR expires_at > NOW())::INT as activeLinks FROM links WHERE user_id = $1",
+        "SELECT COALESCE(SUM(click_count), 0)::INT as TotalClicks, COUNT(*)::INT as TotalLinks, COUNT(*) FILTER (WHERE expires_at IS NULL OR expires_at > NOW())::INT as ActiveLinks FROM links WHERE user_id = $1",
         [userId]
     )?;
 
@@ -258,16 +245,16 @@ fn GetAnalytics(userId: Int) -> AnalyticsData ! Str {
 
         // 3. Daily Clicks (last 7 days)
         let dailyClicks: [DailyClickCount] = db.rawWithParams(
-            "SELECT TO_CHAR((ce.clicked_at::timestamptz)::date, 'Dy') as day, COUNT(*)::INT as clicks FROM clickevents ce JOIN links l ON ce.link_id = l.id WHERE l.user_id = $1 AND (ce.clicked_at::timestamptz) >= NOW() - INTERVAL '7 days' GROUP BY (ce.clicked_at::timestamptz)::date ORDER BY (ce.clicked_at::timestamptz)::date",
+            "SELECT TO_CHAR((ce.clicked_at::timestamptz)::date, 'Dy') as Day, COUNT(*)::INT as Clicks FROM clickevents ce JOIN links l ON ce.link_id = l.id WHERE l.user_id = $1 AND (ce.clicked_at::timestamptz) >= NOW() - INTERVAL '7 days' GROUP BY (ce.clicked_at::timestamptz)::date ORDER BY (ce.clicked_at::timestamptz)::date",
             [userId]
         )?;
 
         Ok AnalyticsData {
-            totalClicks: agg.totalClicks,
-            totalLinks: agg.totalLinks,
-            activeLinks: agg.activeLinks,
-            topLinks,
-            dailyClicks,
+            TotalClicks: agg.TotalClicks,
+            TotalLinks: agg.TotalLinks,
+            ActiveLinks: agg.ActiveLinks,
+            TopLinks: topLinks,
+            DailyClicks: dailyClicks,
         };
     }
 }

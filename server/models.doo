@@ -1,5 +1,4 @@
 // URL Shortener Models
-// Using @autoTimestamp for automatic created_at/updated_at
 
 struct User @autoTimestamp {
     id: Int @primary @auto,
@@ -18,8 +17,28 @@ struct Link @table @autoTimestamp(read) {
     ExpiresAt?: Str,
 }
 
+
 struct ClickEvent @table {
     id: Int @primary @auto,
     LinkId: Int @foreign(Link),
     ClickedAt: Str @default("NOW()"),
+}
+
+struct DailyClickCount {
+    Day: Str,
+    Clicks: Int,
+}
+
+struct Aggregates {
+    TotalClicks: Int,
+    TotalLinks: Int,
+    ActiveLinks: Int,
+}
+
+struct AnalyticsData {
+    TotalClicks: Int,
+    TotalLinks: Int,
+    ActiveLinks: Int,
+    TopLinks: [Link],
+    DailyClicks: [DailyClickCount],
 }
