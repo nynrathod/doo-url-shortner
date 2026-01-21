@@ -5,7 +5,17 @@ import std::Http::Server;
 import std::Database;
 import std::Auth::jwt;
 import Models::{User, Link};
-import Handlers::{CreateLink, RedirectToUrl, GetLinkStats, GetUserLinks, GetLink, ListLinks, DeleteLink, UpdateLink, GetAnalytics};
+import Handlers::{
+    CreateLink,
+    RedirectToUrl,
+    GetLinkStats,
+    GetUserLinks,
+    GetLink,
+    ListLinks,
+    DeleteLink,
+    UpdateLink,
+    GetAnalytics
+};
 
 fn main() {
     // Auto read DATABASE_URL from .env
