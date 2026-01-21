@@ -61,7 +61,7 @@ fn CreateLink(req: CreateLinkReq, userId: Int) -> Link ! Str {
 
         // Loop 5 times for retry
         for i in 0..5 {
-            code = Random::string(6);
+            code = Random::string(7);
             // Check collision (simple select)
             let existing: CountResult = db.rawWithParams(
                 "SELECT COUNT(*) as total FROM links WHERE short_code = $1",
