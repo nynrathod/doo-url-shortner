@@ -61,6 +61,10 @@ DooLang uses a powerful decorator system to define schema validation, database r
 | Decorator | Scope | Description |
 | :--- | :--- | :--- |
 | `@primary` | DB | Marks the field as the primary key. |
+| `@table` | DB | Creates a direct database table via schema. |
+| `@autoTimestamp` | DB | Automatically manages `created_at` and `updated_at` timestamps. |
+| `@redirect` | Logic | Automatically sends a redirect HTTP response if the field is defined. |
+| `@foreign(Table)`| DB | Defines a foreign key relationship, taking the ID from the specified table. |
 | `@auto` | DB/API | Auto-incrementing (DB) and strictly **Output-Only** in API (Response). |
 | `@unique` | DB | Enforces unique constraint in the database. |
 | `@writeOnly` | API | **Input-Only**. Field is required in Request but never sent in Response (e.g., Password). |
