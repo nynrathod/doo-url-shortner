@@ -6,15 +6,21 @@ import { Input } from "@/components/ui/input";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import CreateLinkDialog from "@/components/create-link-dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Search,
   Copy,
   MoreHorizontal,
   BarChart3,
-  Loader2,
   CheckCircle,
   Trash2,
   Pencil,
 } from "lucide-react";
+import { Loader } from "@/components/ui/loader";
 import { copyToClipboard, formatRelativeTime, cn } from "@/lib/utils";
 import type { Link as LinkType } from "@/lib/api";
 
@@ -22,15 +28,25 @@ export default function DashboardPage() {
   const { data: links, isLoading } = useLinks();
   const deleteLink = useDeleteLink();
 
-  const shortBaseUrl =
-    (import.meta as any).env?.VITE_SHORT_BASE_URL || "http://127.0.0.1:3001";
+  const getBaseHost = () => {
+    const apiBase = (import.meta as any).env?.VITE_API_BASE;
+    if (apiBase) {
+      try {
+        return new URL(apiBase).origin;
+      } catch {
+        return window.location.origin;
+      }
+    }
+    return window.location.origin;
+  };
+
+  const shortBaseUrl = getBaseHost();
 
   const [search, setSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingLink, setEditingLink] = useState<LinkType | null>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
-  const [menuOpen, setMenuOpen] = useState<number | null>(null);
-  console.log("links", links);
+
   const filteredLinks =
     (Array.isArray(links) ? links : [])?.filter(
       (link) =>
@@ -49,7 +65,6 @@ export default function DashboardPage() {
     if (confirm("Are you sure you want to delete this link?")) {
       await deleteLink.mutateAsync(id);
     }
-    setMenuOpen(null);
   };
 
   return (
@@ -92,7 +107,7 @@ export default function DashboardPage() {
         {/* Links list */}
         {isLoading ? (
           <div className="flex-1 flex items-center justify-center min-h-0">
-            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+            <Loader simple className="w-5 h-5 text-gray-400" />
           </div>
         ) : filteredLinks.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center border border-dashed border-gray-200 rounded-lg min-h-0">
@@ -141,9 +156,11 @@ export default function DashboardPage() {
                       href={link.DestinationUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 truncate mt-0.5"
+                      className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 mt-0.5 max-w-full"
+                      title={link.DestinationUrl}
                     >
-                      ↳ {link.DestinationUrl}
+                      <span className="shrink-0">↳</span>
+                      <span className="truncate">{link.DestinationUrl}</span>
                     </a>
                   </div>
 
@@ -161,52 +178,38 @@ export default function DashboardPage() {
                   </div>
 
                   {/* Actions menu */}
-                  <div className="relative">
-                    <button
-                      onClick={() =>
-                        setMenuOpen(menuOpen === link.id ? null : link.id)
-                      }
-                      className="p-1.5 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors"
-                    >
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
-
-                    {menuOpen === link.id && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-10"
-                          onClick={() => setMenuOpen(null)}
-                        />
-                        <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 text-sm">
-                          <Link
-                            to={`/link/${link.id}`}
-                            className="flex items-center gap-2 px-3 py-1.5 text-gray-700 hover:bg-gray-50"
-                            onClick={() => setMenuOpen(null)}
-                          >
-                            <BarChart3 className="w-3.5 h-3.5" />
-                            Analytics
-                          </Link>
-                          <button
-                            onClick={() => {
-                              setEditingLink(link);
-                              setMenuOpen(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-3 py-1.5 text-gray-700 hover:bg-gray-50"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(link.id)}
-                            className="w-full flex items-center gap-2 px-3 py-1.5 text-red-600 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            Delete
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-1.5 cursor-pointer text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors outline-none">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-[160px]">
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to={`/link/${link.id}`}
+                          className="w-full cursor-pointer"
+                        >
+                          <BarChart3 className="mr-2 h-3.5 w-3.5 text-gray-500" />
+                          <span>Analytics</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setEditingLink(link)}
+                        className="cursor-pointer"
+                      >
+                        <Pencil className="mr-2 h-3.5 w-3.5 text-gray-500" />
+                        <span>Edit</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(link.id)}
+                        className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                      >
+                        <Trash2 className="mr-2 h-3.5 w-3.5" />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               ))}
             </div>

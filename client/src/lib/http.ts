@@ -45,7 +45,6 @@ const createApiClient = (): AxiosInstance => {
         if (config.headers && typeof config.headers.set === "function") {
           config.headers.set("Authorization", `Bearer ${token}`);
         } else {
-          // @ts-ignore - Handle plain object case
           config.headers["Authorization"] = `Bearer ${token}`;
         }
       }

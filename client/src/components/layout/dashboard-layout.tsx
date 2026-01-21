@@ -1,21 +1,16 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/auth-context";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Link2,
   BarChart3,
   LogOut,
-  Settings,
-  Globe,
   ChevronDown,
   PanelLeft,
   Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import {
-  Drawer,
-  DrawerContent,
-} from "@/components/ui/drawer";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -24,17 +19,11 @@ interface LayoutProps {
 const navItems = [
   {
     section: "Short Links",
-    items: [
-      { label: "Links", href: "/dashboard", icon: Link2 },
-      { label: "Domains", href: "#", icon: Globe },
-    ],
+    items: [{ label: "Links", href: "/dashboard", icon: Link2 }],
   },
   {
     section: "Insights",
-    items: [
-      { label: "Analytics", href: "/analytics", icon: BarChart3 },
-      { label: "Events", href: "#", icon: Settings },
-    ],
+    items: [{ label: "Analytics", href: "/analytics", icon: BarChart3 }],
   },
 ];
 
@@ -46,7 +35,8 @@ export default function DashboardLayout({ children }: LayoutProps) {
   const [navSheetOpen, setNavSheetOpen] = useState(false);
 
   // Get current page name for mobile header
-  const currentPage = location.pathname === "/analytics" ? "Analytics" : "Links";
+  const currentPage =
+    location.pathname === "/analytics" ? "Analytics" : "Links";
 
   return (
     <div className="min-h-screen bg-neutral-200 font-sans text-gray-900 flex">
@@ -80,18 +70,20 @@ export default function DashboardLayout({ children }: LayoutProps) {
                 }}
                 className={cn(
                   "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
-                  location.pathname === "/dashboard" || location.pathname.startsWith("/link/")
+                  location.pathname === "/dashboard" ||
+                    location.pathname.startsWith("/link/")
                     ? "bg-green-50 text-green-700"
-                    : "text-gray-700 hover:bg-gray-50"
+                    : "text-gray-700 hover:bg-gray-50",
                 )}
               >
                 <div className="flex items-center gap-3">
                   <Link2 className="w-4 h-4" />
                   <span>Links</span>
                 </div>
-                {(location.pathname === "/dashboard" || location.pathname.startsWith("/link/")) && (
-                  <Check className="w-4 h-4 text-green-600" />
-                )}
+                {(location.pathname === "/dashboard" ||
+                  location.pathname.startsWith("/link/")) && (
+                    <Check className="w-4 h-4 text-green-600" />
+                  )}
               </button>
               <button
                 onClick={() => {
@@ -102,7 +94,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
                   "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
                   location.pathname === "/analytics"
                     ? "bg-green-50 text-green-700"
-                    : "text-gray-700 hover:bg-gray-50"
+                    : "text-gray-700 hover:bg-gray-50",
                 )}
               >
                 <div className="flex items-center gap-3">
@@ -126,8 +118,6 @@ export default function DashboardLayout({ children }: LayoutProps) {
         />
       )}
 
-      {/* Single Sidebar (256px) - Inner content width matches Dub ~232px */}
-      {/* Single Sidebar (256px) - Inner content width matches Dub ~232px */}
       <aside
         className={cn(
           "fixed lg:sticky top-0 left-0 lg:ml-2 lg:my-2 h-screen lg:h-[calc(100vh-16px)] w-64 lg:w-64 bg-[#F5F5F5] lg:rounded-xl  z-50 transition-transform duration-200 ease-in-out flex-shrink-0 flex flex-col",

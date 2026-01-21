@@ -50,7 +50,11 @@ export default function CreateLinkDialog({
 
   useEffect(() => {
     if (open) {
-      setShouldRender(true);
+      // Small timeout to allow render before animation starts?
+      // Or just set state. If this causes duplicate render, it's unavoidable for mount animation pattern.
+      // But the warning says "synchronously within an effect".
+      // We can use requestAnimationFrame to make it async but still fast.
+      requestAnimationFrame(() => setShouldRender(true));
     } else {
       setIsVisible(false);
     }
@@ -167,7 +171,9 @@ export default function CreateLinkDialog({
       handleClose();
     } catch (error) {
       setErrors({
-        submit: isEditMode ? "Failed to update link." : "Failed to create link. Short code might be taken.",
+        submit: isEditMode
+          ? "Failed to update link."
+          : "Failed to create link. Short code might be taken.",
       });
     }
   };
@@ -304,7 +310,11 @@ export default function CreateLinkDialog({
                 <h2 className="text-sm font-semibold text-gray-900">
                   {isEditMode ? "Edit link" : "Create new link"}
                 </h2>
-                <p className="text-xs text-gray-500">{isEditMode ? "Update destination or expiry" : "Shorten a URL to share"}</p>
+                <p className="text-xs text-gray-500">
+                  {isEditMode
+                    ? "Update destination or expiry"
+                    : "Shorten a URL to share"}
+                </p>
               </div>
             </div>
             <button
@@ -357,7 +367,9 @@ export default function CreateLinkDialog({
             {isEditMode ? "Edit link" : "Create new link"}
           </DrawerTitle>
           <div className="text-xs text-gray-500 pl-10">
-            {isEditMode ? "Update destination or expiry" : "Shorten a URL to share"}
+            {isEditMode
+              ? "Update destination or expiry"
+              : "Shorten a URL to share"}
           </div>
         </DrawerHeader>
         <div className="p-4 overflow-y-auto max-h-[70vh]">

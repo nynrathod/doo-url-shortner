@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Loader } from "@/components/ui/loader";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "default" | "outline" | "ghost" | "secondary";
@@ -47,7 +47,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(baseStyles, variants[variant], sizes[size], className)}
         {...props}
       >
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+        {loading ? <Loader simple className="h-4 w-4" /> : null}
         {children}
       </button>
     );

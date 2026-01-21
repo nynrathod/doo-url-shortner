@@ -1,44 +1,39 @@
-import { type ClassValue, clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export function formatDate(date: string | Date): string {
-    return new Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    }).format(new Date(date))
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(date));
 }
 
 export function formatRelativeTime(date: string | Date): string {
-    const now = new Date()
-    const then = new Date(date)
-    const diffMs = now.getTime() - then.getTime()
-    const diffSecs = Math.floor(diffMs / 1000)
-    const diffMins = Math.floor(diffSecs / 60)
-    const diffHours = Math.floor(diffMins / 60)
-    const diffDays = Math.floor(diffHours / 24)
+  const now = new Date();
+  const then = new Date(date);
+  const diffMs = now.getTime() - then.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
 
-    if (diffSecs < 60) return 'just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays < 7) return `${diffDays}d ago`
-    return formatDate(date)
+  if (diffSecs < 60) return "just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return formatDate(date);
 }
 
 export function truncateUrl(url: string, maxLength: number = 50): string {
-    if (url.length <= maxLength) return url
-    return url.substring(0, maxLength - 3) + '...'
+  if (url.length <= maxLength) return url;
+  return url.substring(0, maxLength - 3) + "...";
 }
 
 export function copyToClipboard(text: string): Promise<void> {
-    return navigator.clipboard.writeText(text)
-}
-
-export function generateShortCode(length: number = 6): string {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+  return navigator.clipboard.writeText(text);
 }

@@ -1,7 +1,8 @@
 import { useAnalytics } from "@/hooks/use-analytics";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { AreaChart } from "@/components/ui/area-chart";
-import { BarChart3, Loader2 } from "lucide-react";
+import { BarChart3 } from "lucide-react";
+import { Loader } from "@/components/ui/loader";
 
 export default function AnalyticsPage() {
   const { data: analytics, isLoading } = useAnalytics();
@@ -15,7 +16,7 @@ export default function AnalyticsPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+          <Loader simple className="w-5 h-5 text-gray-400" />
         </div>
       </DashboardLayout>
     );
@@ -63,7 +64,9 @@ export default function AnalyticsPage() {
         {/* Chart */}
         <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-medium text-gray-900">Click Trends (Last 7 Days)</h2>
+            <h2 className="text-sm font-medium text-gray-900">
+              Click Trends (Last 7 Days)
+            </h2>
           </div>
 
           {/* Visx Area Chart */}
@@ -72,11 +75,13 @@ export default function AnalyticsPage() {
               data={(() => {
                 const dailyClicks = analytics?.dailyClicks || [];
                 // Create a map of day abbreviation to clicks
-                const clicksByDay = new Map(dailyClicks.map(d => [d.day, d.clicks]));
+                const clicksByDay = new Map(
+                  dailyClicks.map((d) => [d.day, d.clicks]),
+                );
 
                 // Generate all 7 days (going back from today)
                 const today = new Date();
-                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
                 const points = [];
 
                 for (let i = 6; i >= 0; i--) {
