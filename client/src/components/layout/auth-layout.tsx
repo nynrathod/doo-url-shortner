@@ -6,32 +6,29 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
-      {/* Left Interface */}
-      <div className="hidden lg:flex flex-col justify-between bg-black p-10 text-white">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-50">
+      <div className="w-full max-w-[350px] px-4">
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center">
             <Globe className="w-4 h-4 text-white" />
           </div>
           <span className="font-semibold text-lg">DooShort</span>
         </div>
 
-        <div>
-          <blockquote className="space-y-2">
-            <p className="text-lg">
-              &ldquo;This library has saved me countless hours of work and
-              helped me deliver stunning designs to my clients faster than ever
-              before.&rdquo;
-            </p>
-            <footer className="text-sm text-neutral-400">Sofia Davis</footer>
-          </blockquote>
-        </div>
-      </div>
+        {children}
 
-      {/* Right Content */}
-      <div className="p-8 lg:p-8 flex items-center justify-center">
-        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-          {children}
+        <div className="mt-8 text-center space-y-4">
+          <p className="text-sm text-neutral-500">
+            Written in <a href="https://github.com/nynrathod/doolang" target="_blank" rel="noopener noreferrer" className="font-bold underline text-neutral-900 hover:text-black">DooLang</a> native binary
+          </p>
+          <a
+            href="https://github.com/nynrathod/doo-url-shortner"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-neutral-400 hover:text-neutral-600 underline transition-colors"
+          >
+            View Source Code
+          </a>
         </div>
       </div>
     </div>

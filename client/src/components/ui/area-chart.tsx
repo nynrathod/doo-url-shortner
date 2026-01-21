@@ -28,7 +28,6 @@ const getDate = (d: DataPoint) => d.date;
 const getValue = (d: DataPoint) => d.value;
 const bisectDate = bisector<DataPoint, Date>((d) => d.date).left;
 
-// Dub.co color scheme
 const BLUE_PRIMARY = "#2563eb"; // Blue-600
 const BLUE_GRADIENT_START = "rgba(37, 99, 235, 0.3)";
 const BLUE_GRADIENT_END = "rgba(37, 99, 235, 0.0)";

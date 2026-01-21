@@ -7,6 +7,7 @@ import {
   ChevronDown,
   PanelLeft,
   Check,
+  Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -82,8 +83,8 @@ export default function DashboardLayout({ children }: LayoutProps) {
                 </div>
                 {(location.pathname === "/dashboard" ||
                   location.pathname.startsWith("/link/")) && (
-                    <Check className="w-4 h-4 text-green-600" />
-                  )}
+                  <Check className="w-4 h-4 text-green-600" />
+                )}
               </button>
               <button
                 onClick={() => {
@@ -127,10 +128,10 @@ export default function DashboardLayout({ children }: LayoutProps) {
         {/* Header / Workspace Switcher */}
         <div className="p-3">
           <div className="flex items-center gap-2 px-2 mb-3 mt-1">
-            <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center text-white font-bold">
-              d
+            <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center">
+              <Globe className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-xl tracking-tight">dub</span>
+            <span className="font-bold text-xl tracking-tight">DooShort</span>
           </div>
         </div>
 
@@ -174,7 +175,6 @@ export default function DashboardLayout({ children }: LayoutProps) {
           ))}
         </nav>
 
-        {/* Footer */}
         <div className="p-3 bg-[#F5F5F5] lg:rounded-b-xl border-t border-gray-200/50">
           <div className="flex items-center gap-3 px-2 py-2">
             <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center overflow-hidden">
@@ -197,6 +197,28 @@ export default function DashboardLayout({ children }: LayoutProps) {
             >
               <LogOut className="w-4 h-4" />
             </button>
+          </div>
+
+          <div className="px-2 pt-2 border-t border-gray-200/50 mt-1 flex flex-col items-center gap-2 text-center">
+            <div className="text-[10px] text-neutral-400">
+              Powered by{" "}
+              <a
+                href="https://github.com/nynrathod/doolang"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-neutral-900 underline hover:text-black"
+              >
+                DooLang
+              </a>
+            </div>
+            <a
+              href="https://github.com/nynrathod/doo-url-shortner"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] text-neutral-400 hover:text-neutral-600 underline transition-colors"
+            >
+              View Source Code
+            </a>
           </div>
         </div>
       </aside>

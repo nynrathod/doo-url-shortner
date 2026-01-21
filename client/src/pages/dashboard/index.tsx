@@ -139,11 +139,11 @@ export default function DashboardPage() {
                         to={`/link/${link.id}`}
                         className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"
                       >
-                        linkshort/{link.ShortCode}
+                        dooshort/{link.ShortCode}
                       </Link>
                       <button
                         onClick={() => handleCopy(link)}
-                        className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="p-1 cursor-copy text-gray-400 hover:text-gray-600 transition-colors"
                       >
                         {copiedId === link.id ? (
                           <CheckCircle className="w-3.5 h-3.5 text-green-500" />

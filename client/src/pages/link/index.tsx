@@ -112,7 +112,7 @@ export default function LinkDetailsPage() {
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div className="min-w-0 flex-1">
               <h1 className="text-xl font-semibold text-neutral-900 mb-1">
-                linkshort/{stats.ShortCode}
+                dooshort/{stats.ShortCode}
               </h1>
               <a
                 href={stats.DestinationUrl}
